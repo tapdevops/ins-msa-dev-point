@@ -91,8 +91,16 @@
             });
             let uniqueLocationCode = [...new Set(substringLocationCode)];
             auth.LOCATION_CODE = uniqueLocationCode.join(",");
-            let now = moment(new Date()).tz('Asia/Jakarta')
-            let endOfMonth = new Date(now.year(), now.month() + 1, 0);
+            let endOfMonth;
+            let now = moment(new Date()).tz('Asia/Jakarta');
+            let fourth = new Date(now.year(), now.month(), 18);
+            let dateNumberNow = parseInt(dateformat(now, 'yyyymmdd'));
+            let fourthNumber = parseInt(dateformat(fourth, 'yyyymmdd'));
+            if (dateNumberNow >= fourthNumber) {
+                endOfMonth = new Date(now.year(), now.month() + 1, 0);
+            } else {
+                endOfMonth = new Date(now.year(), now.month(), 0);
+            }
             let dateNumber = parseInt(dateformat(endOfMonth, 'yyyymmdd')); //misalnya 20203101
             
             //Periksa current user di TR_POINT, jika tidak ada 

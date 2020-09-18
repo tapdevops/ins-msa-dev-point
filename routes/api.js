@@ -6,6 +6,9 @@
 
     //Controllers
     const Controllers = {
+        v_1_2: {
+            Point: require( _directory_base + '/app/v1.2/controllers/Point.js' ),
+        },
         v_1_1: {
             Point: require( _directory_base + '/app/v1.1/controllers/Point.js' ),
         },
@@ -13,7 +16,7 @@
             Point: require( _directory_base + '/app/v1.0/controllers/Point.js' ),
         }
     }
-    const VerifyToken =  require(_directory_base + '/app/utils/VerifyToken.js')
+    const VerifyToken =  require(_directory_base + '/app/v1.1/utils/VerifyToken.js')
     module.exports = ( app ) => {
 
         /*
@@ -33,10 +36,18 @@
             
         /*
         |--------------------------------------------------------------------------
+        | Versi 1.2
+        |--------------------------------------------------------------------------
+        */
+       //tgl 1-3 tampilkan leader board bulan sebelumnya
+        app.get('/api/v1.2/point/users', VerifyToken,  Controllers.v_1_2.Point.userPoints);
+
+        /*
+        |--------------------------------------------------------------------------
         | Versi 1.1
         |--------------------------------------------------------------------------
         */
-       //tambahan rank point user untuk Kabun dan EM 
+       //tambahan rank point user aslap untuk Kabun dan EM 
         app.get('/api/v1.1/point/users', VerifyToken,  Controllers.v_1_1.Point.userPoints);
         app.get('/api/v1.1/point/report/:month', VerifyToken,  Controllers.v_1_1.Point.report);
         app.get('/api/v1.1/point/me', VerifyToken,  Controllers.v_1_1.Point.myPoint);

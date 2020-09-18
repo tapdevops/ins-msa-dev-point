@@ -21,7 +21,7 @@
     const mongoose = require('mongoose');
 
     //utils
-    const kafka = require(_directory_base + '/app/utils/Kafka.js');
+    const kafka = require(_directory_base + '/app/v1.2/utils/Kafka.js');
 /*
 |--------------------------------------------------------------------------
 | APP Init
