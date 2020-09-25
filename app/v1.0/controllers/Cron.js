@@ -26,6 +26,7 @@
     const async = require('async');
     const moment = require( 'moment-timezone' );
     const dateformat = require('dateformat');
+    const axios = require('axios');
 	// const { v4: uuidv4 } = require('uuid');
 	// Libraries
 	// const HelperLib = require( _directory_base + '/app/v2.0/Http/Libraries/HelperLib.js' );
@@ -43,6 +44,104 @@
 */
     class Cron {
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hitung total point bulanan setiap aslap
+        |--------------------------------------------------------------------------
+        | 
+        |
+        */
+        async monthlyPoint(req, res) {
+            let now = moment(new Date()).tz('Asia/Jakarta');
+            let endOfMonth = new Date(now.year(), now.month() + 1, 0);
+            let endOfMonthNumber = parseInt(dateformat(endOfMonth, 'yyyymmdd'))
+            let endOfMonthNumberFull = parseInt(dateformat(endOfMonth, 'yyyymmddHHMMss'))
+            let endOfMonthFormatted = dateformat(endOfMonth, 'mmmm yyyy');
+            async.auto({
+                getAllAslapPoint: function(callback) {
+                    Point.aggregate([
+                        {
+                            $group: {
+                                _id: {
+                                    USER_AUTH_CODE: "$USER_AUTH_CODE",
+                                    MONTH: "$MONTH"
+                                }, 
+                                POINT: { $sum: "$POINT" }
+                            }
+                        }, {
+                            $lookup: {
+                                from: "VIEW_USER_AUTH",
+                                foreignField: "USER_AUTH_CODE",
+                                localField: "_id.USER_AUTH_CODE",
+                                as: "viewUser"
+                            }
+                        }, {
+                           $unwind: "$viewUser" 
+                        }, {
+                            $project: {
+                                _id: 0,
+                                USER_AUTH_CODE: "$_id.USER_AUTH_CODE",
+                                FULLNAME: {$ifNull: ["$viewUser.HRIS_FULLNAME", "$viewUser.PJS_FULLNAME"]},
+                                MONTH: "$_id.MONTH",
+                                POINT: "$POINT"
+                            }
+                        }, {
+                            $match: {
+                                MONTH: endOfMonthNumber
+                            }
+                        }
+                    ])
+                    .then(data => {
+                        callback(null, data);
+                    })
+                    .catch(err => {
+                        callback(err, null);
+                    })
+                }, 
+                sendToNotifications: ['getAllAslapPoint', function(results, callback) {
+                    let aslapPoint = results.getAllAslapPoint;
+                    async.each(aslapPoint, function(aslap, callbackEach){
+                        let body = {
+                            FINDING_CODE: '-',
+                            CATEGORY: 'TOTAL POINT',
+                            NOTIFICATION_TO: aslap.USER_AUTH_CODE,
+                            MESSAGE: `Hai ${aslap.FULLNAME}, selama bulan ${endOfMonthFormatted}, kamu telah mendapatkan point dengan total sebesar ${aslap.POINT} points.`,
+                            INSERT_TIME: endOfMonthNumberFull
+                        }
+                        let findingUrl = config.app.url[config.app.env].microservice_finding + '/api/v2.1/notification';
+                        // console.log(body);
+                        // console.log(findingUrl);
+                        axios.defaults.headers.common['Authorization'] = req.headers.authorization;
+                        axios.post(
+                            findingUrl, 
+                            body)
+                          .then(function (response) {
+                            console.log(response.data);
+                            callbackEach();
+                          })
+                          .catch(function (error) {
+                            console.log(error);
+                            callbackEach(error, null);
+                          });
+                    }, function(err) {
+                        if(err) {
+                            callback(err, null);
+                            return;
+                        } else {
+                            callback(null, aslapPoint)
+                        }
+                    })
+                }]
+            }, function(err, results) {
+                // console.log(results);
+                res.send({
+                    status: true,
+                    message: 'success',
+                    data: { point: results.sendToNotifications }
+                })
+            })
+        }
         /*
         |--------------------------------------------------------------------------
         | Hitung target daily inspection setiap aslap
@@ -299,8 +398,8 @@
         */
         checkAllBlockInspected(req, res) {
             let now = moment(new Date()).tz('Asia/Jakarta')
-            let startOfMonth = new Date(now.year(), now.month(), 1);
-            let endOfMonth = new Date(now.year(), now.month() + 1, 0);
+            let startOfMonth = new Date(now.year(), now.month() - 1, 1);
+            let endOfMonth = new Date(now.year(), now.month(), 0);
             let startOfMonthNumber = parseInt(dateformat(startOfMonth, 'yyyymmdd'));
             let endOfMonthNumber = parseInt(dateformat(endOfMonth, 'yyyymmdd'))
             async.auto({
