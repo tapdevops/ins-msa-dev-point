@@ -63,5 +63,6 @@
         app.get('/api/v1.0/point/users', VerifyToken,  Controllers.v_1_0.Point.userPoints);
         app.get('/api/v1.0/cron/block-inspected',  Controllers.v_1_0.Cron.checkAllBlockInspected);
         app.get('/api/v1.0/cron/daily-transaction',  Controllers.v_1_0.Cron.checkDailyTransaction);
+        app.get('/api/v1.0/cron/monthly-point',  Controllers.v_1_0.Cron.monthlyPoint);
         // app.post('/api/v1.0/point/user', Controllers.v_1_0.Point.updatePoint);
     }

@@ -84,7 +84,7 @@
  |--------------------------------------------------------------------------
  */
     //scheduling check target sampling dan inspection setiap 00:00
-    new CronJob('0 0 * * *', async () => {
+    new CronJob('10 0 * * *', async () => {
     // new CronJob('* * * * *', async () => {
         let url = config.app.url[config.app.env].microservice_point + '/api/v1.0/cron/daily-transaction';
         // let url = 'http://localhost:5016/api/v1.0/cron/daily-transaction';
@@ -101,7 +101,7 @@
     }, null, true, 'Asia/Jakarta');
     
     //scheduling check semua block diinspeksi setiap akhir bulan
-    new CronJob('0 0 1 * *', async () => {
+    new CronJob('20 0 1 * *', async () => {
     // new CronJob('* * * * *', async () => {
         let url = config.app.url[config.app.env].microservice_point + '/api/v1.0/cron/block-inspected';
         console.log(url);
@@ -110,6 +110,23 @@
         .then(function (response) {
             // handle success
             console.log('success');
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        });
+    }, null, true, 'Asia/Jakarta');
+
+    //scheduling hitung total point
+    new CronJob('30 0 1 * *', async () => {
+    // new CronJob('* * * * *', async () => {
+        let url = config.app.url[config.app.env].microservice_point + '/api/v1.0/cron/monthly-point';
+        // console.log(url);
+        // let url = 'http://localhost:5016/api/v1.0/cron/monthly-point';
+        axios.get(url)
+        .then(function (response) {
+            // handle success
+            console.log('response');
         })
         .catch(function (error) {
             // handle error
