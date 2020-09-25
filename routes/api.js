@@ -14,6 +14,7 @@
         },
         v_1_0: {
             Point: require( _directory_base + '/app/v1.0/controllers/Point.js' ),
+            Cron: require( _directory_base + '/app/v1.0/controllers/Cron.js' ),
         }
     }
     const VerifyToken =  require(_directory_base + '/app/v1.1/utils/VerifyToken.js')
@@ -60,5 +61,7 @@
         
         app.get('/api/v1.0/point/me', VerifyToken,  Controllers.v_1_0.Point.myPoint);
         app.get('/api/v1.0/point/users', VerifyToken,  Controllers.v_1_0.Point.userPoints);
+        app.get('/api/v1.0/cron/block-inspected',  Controllers.v_1_0.Cron.checkAllBlockInspected);
+        app.get('/api/v1.0/cron/daily-transaction',  Controllers.v_1_0.Cron.checkDailyTransaction);
         // app.post('/api/v1.0/point/user', Controllers.v_1_0.Point.updatePoint);
     }

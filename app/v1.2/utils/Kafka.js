@@ -105,8 +105,8 @@
                         }
                         
                         //update point user yang membuat finding
-                        this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
-                        this.saveToHistory(data.UPTUR, 2, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
+                        // this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
+                        // this.saveToHistory(data.UPTUR, 2, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                         //memberi tambahan point sesuai rating yang diberikan
                         
                     } else if (data.END_TIME != "" && data.RTGVL != 0) {
@@ -244,34 +244,21 @@
                  console.log(err);
             }
         }
-        async saveToHistory(userAuthCode, point, dateNumber, date, type, remarks, werks,reference) {
-            date = date.toString();
-            // console.log({
-            //     userAuthCode: userAuthCode,
-            //     point: point,
-            //     dateNumber: dateNumber,
-            //     date: date,
-            //     type: type,
-            //     remarks: remarks,
-            //     werks: werks,
-            //     reference: reference
-            // });
+        async saveToHistory(userAuthCode, point, period, dateNumber, type, remarks, werks,reference) {
             try {
-                let year = String(date.substring(0, 4));
-                let month = String( date.substring(5, 6));
-                let day = String( date.substring(7, 8));
-                let date = new Date(`${year}-${month}-${day}`);
+                dateNumber = parseInt(dateNumber.toString().substring(0, 8));
                 let history = new Models.History({
                     USER_AUTH_CODE: userAuthCode,
                     POINT: point,
                     BA_CODE: werks,
-                    PERIOD: dateNumber,
-                    DATE: date,
+                    PERIOD: period,
+                    DATE: dateNumber,
                     TYPE: type,
                     REMARKS: remarks,
                     REFERENCE: reference
                 });
                 await history.save();
+                console.log('berhasil simpan ke history: ' + reference);
             } catch(err) {
                 console.log(err);
             }

@@ -12,7 +12,15 @@ const History = mongoose.Schema({
 			return null;
 		}
 	},
-    DATE: Date,
+    DATE: {
+		type: Number,
+		get: v => Math.floor( v ),
+		set: v => Math.floor( v ),
+		alias: 'i',
+		default: function() {
+			return null;
+		}
+	},
     BA_CODE: String,
     POINT: Number,
     TYPE: String,
