@@ -9,11 +9,15 @@
 
     //Models
     const Models = {
-        Point: require( _directory_base + '/app/models/Point.js'),
-        KafkaPayload: require( _directory_base + '/app/models/KafkaPayload.js'),
-        ViewUserAuth: require( _directory_base + '/app/models/ViewUserAuth.js'),
-        InspectionH: require( _directory_base + '/app/models/InspectionH.js'),
+        Point: require( _directory_base + '/app/v1.0/models/Point.js'),
+        KafkaPayload: require( _directory_base + '/app/v1.0/models/KafkaPayload.js'),
+        ViewUserAuth: require( _directory_base + '/app/v1.0/models/ViewUserAuth.js'),
+        InspectionH: require( _directory_base + '/app/v1.0/models/InspectionH.js'),
+        History: require( _directory_base + '/app/v1.0/models/History.js'),
     }
+
+    //library
+    const Helper = require( _directory_base + '/app/v1.0/utils/Helper.js');
 /*
 |--------------------------------------------------------------------------
 | Kafka Server Library
@@ -85,7 +89,7 @@
                 let topic = message.topic;
                 let inspectionDate = parseInt(moment( new Date() ).tz( "Asia/Jakarta" ).format( "YYYYMMDDHHmmss" ));
                 let werks = data.WERKS;
-                
+                let remarks;
                 if (topic === 'INS_MSA_FINDING_TR_FINDING') {
 
                     //jika finding sudah selesai, maka lakukan perhitungan point
@@ -94,35 +98,54 @@
                         let dueDate = parseInt(data.DUE_DATE.substring(0, 8));
                         //jika finding sudah diselesaikan dan tidak overdue dapat 5 point ,
                         // jika overdue maka user yang menyelasaikan finding tidak mendapatkan tambahan point
+                        remarks = 'selesai 1 transaksi';
                         if (endTimeNumber <= dueDate) {
                             this.updatePoint(data.UPTUR, 5, dateNumber, null, werks);
+                            this.saveToHistory(data.UPTUR, 5, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                         }
                         
                         //update point user yang membuat finding
-                        this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
+                        // this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
+                        // this.saveToHistory(data.UPTUR, 2, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                         //memberi tambahan point sesuai rating yang diberikan
                         
                     } else if (data.END_TIME != "" && data.RTGVL != 0) {
                         let ratings = [1, 2, 3, 4];
+                        let ratingMessage = [
+                            "rating BAD",
+                            "rating OK",
+                            "rating GOOD",
+                            "rating GREAT",
+                        ];
                         for (let i = 0; i < ratings.length; i++) {
                             if (data.RTGVL == ratings[i]) {
+                                remarks = ratingMessage[i];
                                 this.updatePoint(data.UPTUR, ratings[i] - 2, dateNumber, null, werks);
+                                this.saveToHistory(data.UPTUR, ratings[i] - 2, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                                 break;
                             }
                         }
                     } 
                     this.updateOffset(topic, offsetFetch);
                 } else if (topic === 'INS_MSA_INS_TR_BLOCK_INSPECTION_H') {
+                    remarks = '1 baris';
                     this.updateOffset(topic, offsetFetch);
                     this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks);
+                    this.saveToHistory(data.INSUR, 1, dateNumber, data.INSTM, 'INSPEKSI', remarks, werks, data.BINCH);
                 } else if (topic === 'INS_MSA_INS_TR_INSPECTION_GENBA') {
-                    let inspection = await Models.InspectionH.findOne({BLOCK_INSPECTION_CODE: data.BINCH}).select({_id: 0, WERKS: 1});
+                    remarks = '1 transaksi';
+                    let inspection = await Models.InspectionH.findOne({BLOCK_INSPECTION_CODE: data.BINCH}).select({_id: 0, BLOCK_INSPECTION_CODE: 1, WERKS: 1, INSERT_TIME: 1});
+                    let blockInspectionCode = inspection.BLOCK_INSPECTION_CODE;
                     let werksGenba = inspection.WERKS;
-                    this.updatePoint(data.GNBUR, 1, dateNumber, inspectionDate, werksGenba);
+                    let insertTime = inspection.INSERT_TIME;
+                    this.updatePoint(data.GNBUR, 1, dateNumber, inspectionDate, werksGenba);                    
                     this.updateOffset(topic, offsetFetch);
+                    this.saveToHistory(data.GNBUR, 1, dateNumber, insertTime, 'GENBA', remarks, werksGenba, blockInspectionCode);
                 } else if (topic === 'INS_MSA_EBCCVAL_TR_EBCC_VALIDATION_H') {
+                    remarks = '1 transaksi';
                     this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks);
                     this.updateOffset(topic, offsetFetch);
+                    this.saveToHistory(data.INSUR, 1, dateNumber, data.INSTM, 'SAMPLING EBCC', remarks, werks, data.EBVTC);
                 }
             } catch (err) {
                 console.log(err);
@@ -219,6 +242,25 @@
                 });
             } catch (err) {
                  console.log(err);
+            }
+        }
+        async saveToHistory(userAuthCode, point, period, dateNumber, type, remarks, werks,reference) {
+            try {
+                dateNumber = parseInt(dateNumber.toString().substring(0, 8));
+                let history = new Models.History({
+                    USER_AUTH_CODE: userAuthCode,
+                    POINT: point,
+                    BA_CODE: werks,
+                    PERIOD: period,
+                    DATE: dateNumber,
+                    TYPE: type,
+                    REMARKS: remarks,
+                    REFERENCE: reference
+                });
+                await history.save();
+                console.log('berhasil simpan ke history: ' + reference);
+            } catch(err) {
+                console.log(err);
             }
         }
     }

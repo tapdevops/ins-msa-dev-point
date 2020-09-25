@@ -19,9 +19,13 @@
     const express = require('express');
     const app = express();
     const mongoose = require('mongoose');
+    const CronJob = require('cron').CronJob;
+    const axios = require('axios');
 
     //utils
-    const kafka = require(_directory_base + '/app/utils/Kafka.js');
+    const kafka = require(_directory_base + '/app/v1.2/utils/Kafka.js');
+    const Cron = require(_directory_base + '/app/v1.2/utils/Cron.js');
+
 /*
 |--------------------------------------------------------------------------
 | APP Init
@@ -74,3 +78,42 @@
  |--------------------------------------------------------------------------
  */
     kafka.consumer();
+/*
+ |--------------------------------------------------------------------------
+ | Cron Job
+ |--------------------------------------------------------------------------
+ */
+    //scheduling check target sampling dan inspection setiap 00:00
+    new CronJob('0 0 * * *', async () => {
+    // new CronJob('* * * * *', async () => {
+        let url = config.app.url[config.app.env].microservice_point + '/api/v1.0/cron/daily-transaction';
+        // let url = 'http://localhost:5016/api/v1.0/cron/daily-transaction';
+        console.log(url);
+        axios.get(url)
+        .then(function (response) {
+            // handle success
+            console.log('success');
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        });
+    }, null, true, 'Asia/Jakarta');
+    
+    //scheduling check semua block diinspeksi setiap akhir bulan
+    new CronJob('0 0 1 * *', async () => {
+    // new CronJob('* * * * *', async () => {
+        let url = config.app.url[config.app.env].microservice_point + '/api/v1.0/cron/block-inspected';
+        console.log(url);
+        // let url = 'http://localhost:5016/api/v1.0/cron/block-inspected';
+        axios.get(url)
+        .then(function (response) {
+            // handle success
+            console.log('success');
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        });
+    }, null, true, 'Asia/Jakarta');
+    
