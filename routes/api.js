@@ -14,6 +14,7 @@
         },
         v_1_0: {
             Point: require( _directory_base + '/app/v1.0/controllers/Point.js' ),
+            History: require( _directory_base + '/app/v1.0/controllers/History.js' ),
             Cron: require( _directory_base + '/app/v1.0/controllers/Cron.js' ),
         }
     }
@@ -64,5 +65,5 @@
         app.get('/api/v1.0/cron/block-inspected',  Controllers.v_1_0.Cron.checkAllBlockInspected);
         app.get('/api/v1.0/cron/daily-transaction',  Controllers.v_1_0.Cron.checkDailyTransaction);
         app.get('/api/v1.0/cron/monthly-point',  Controllers.v_1_0.Cron.monthlyPoint);
-        // app.post('/api/v1.0/point/user', Controllers.v_1_0.Point.updatePoint);
+        app.get('/api/v1.0/history/report/:month', VerifyToken,  Controllers.v_1_0.History.report);
     }
