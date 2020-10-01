@@ -94,15 +94,15 @@
 
                     //jika finding sudah selesai, maka lakukan perhitungan point
                     if (data.END_TIME != "" && data.RTGVL == 0) {
-                        let endTimeNumber = parseInt(data.END_TIME.substring(0, 8));
-                        let dueDate = parseInt(data.DUE_DATE.substring(0, 8));
-                        //jika finding sudah diselesaikan dan tidak overdue dapat 5 point ,
-                        // jika overdue maka user yang menyelasaikan finding tidak mendapatkan tambahan point
+                        // let endTimeNumber = parseInt(data.END_TIME.substring(0, 8));
+                        // let dueDate = parseInt(data.DUE_DATE.substring(0, 8));
+                        //jika finding sudah diselesaikan dan tidak overdue dapat 1 point ,
+                        
                         remarks = 'selesai 1 transaksi';
-                        if (endTimeNumber <= dueDate) {
-                            this.updatePoint(data.UPTUR, 1, dateNumber, null, werks);
-                            this.saveToHistory(data.UPTUR, 1, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
-                        }
+                        // if (endTimeNumber <= dueDate) {
+                        this.updatePoint(data.UPTUR, 1, dateNumber, null, werks);
+                        this.saveToHistory(data.UPTUR, 1, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
+                        // }
                         
                         //update point user yang membuat finding
                         // this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
