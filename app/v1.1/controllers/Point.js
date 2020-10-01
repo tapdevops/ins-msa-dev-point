@@ -562,7 +562,7 @@
                     points.map(async (point) => {
                         let lastDateOfMonth = point.MONTH.toString();
                         let year = lastDateOfMonth.substring(0, 4);
-                        let month = lastDateOfMonth.substring(5, 6);
+                        let month = lastDateOfMonth.substring(4, 6);
                         let periode = new Date(`${month}/01/${year}`);
                         periode = dateformat(periode, 'mm/dd/yyyy');
                         point.MONTH = undefined;
