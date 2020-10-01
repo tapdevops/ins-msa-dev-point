@@ -100,8 +100,8 @@
                         // jika overdue maka user yang menyelasaikan finding tidak mendapatkan tambahan point
                         remarks = 'selesai 1 transaksi';
                         if (endTimeNumber <= dueDate) {
-                            this.updatePoint(data.UPTUR, 5, dateNumber, null, werks);
-                            this.saveToHistory(data.UPTUR, 5, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
+                            this.updatePoint(data.UPTUR, 1, dateNumber, null, werks);
+                            this.saveToHistory(data.UPTUR, 1, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                         }
                         
                         //update point user yang membuat finding
