@@ -574,15 +574,22 @@
                 getEstateName: ['mappingPeriode', function(results, callback) {
                     let points = results.mappingPeriode;
                     async.each(points, function(point, callbackEach) {
-                        Models.Est.findOne({WERKS: point.LOCATION_CODE.substring(0, 4)}).select({_id: 0, EST_NAME: 1})
-                        .then( data => {
-                            point.BUSINESS_AREA = data.EST_NAME;
+                        if(point.LOCATION_CODE.length >= 4) {
+                            Models.Est.findOne({WERKS: point.LOCATION_CODE.substring(0, 4)}).select({_id: 0, EST_NAME: 1})
+                            .then( data => {
+                                point.BUSINESS_AREA = data.EST_NAME;
+                                callbackEach();
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                callbackEach(err, null);
+                            });
+                        } else {
+                            points = points.filter((p) => {
+                                return p.LOCATION_CODE !== point.LOCATION_CODE 
+                            })
                             callbackEach();
-                        })
-                        .catch(err => {
-                            console.log(err);
-                            callbackEach(err, null);
-                        });
+                        }
                     }, function(err) {
                         if (err) {
                             callback(err, null);
