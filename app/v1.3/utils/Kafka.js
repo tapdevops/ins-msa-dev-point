@@ -100,7 +100,7 @@
                         
                         remarks = 'selesai 1 transaksi';
                         // if (endTimeNumber <= dueDate) {
-                        this.updatePoint(data.UPTUR, 1, dateNumber, null, werks);
+                        this.updatePoint(data.UPTUR, 1, dateNumber, null, werks, consumerGroup);
                         this.saveToHistory(data.UPTUR, 1, dateNumber, data.INSTM, 'FINDINGS', remarks, werks, data.FNDCD);
                         // }
                         
