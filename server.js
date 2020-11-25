@@ -23,7 +23,7 @@
     const axios = require('axios');
 
     //utils
-    const kafka = require(_directory_base + '/app/v1.2/utils/Kafka.js');
+    const kafka = require(_directory_base + '/app/v1.3/utils/Kafka.js');
     const Cron = require(_directory_base + '/app/v1.2/utils/Cron.js');
 
 /*
