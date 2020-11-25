@@ -45,10 +45,16 @@
 				protocol: ['roundrobin'],
 				// Offsets to use for new groups other options could be 'earliest' or 'none'
 				// (none will emit an error if no offsets were saved) equivalent to Java client's auto.offset.reset
-				fromOffset: 'none',
+				fromOffset: 'latest',
 				// how to recover from OutOfRangeOffset error (where save offset is past server retention)
 				// accepts same value as fromOffset
-				outOfRangeOffset: 'earliest'
+                outOfRangeOffset: 'earliest',
+                commitOffsetsOnFirstJoin: true, // on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
+				// how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
+				outOfRangeOffset: 'earliest', // default
+				// Callback to allow consumers with autoCommit false a chance to commit before a rebalance finishes
+				// isAlreadyMember will be false on the first connection, and true on rebalances triggered after that
+				onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
 			};
 			let consumerGroup = new ConsumerGroup(options, ['INS_MSA_FINDING_TR_FINDING', 'INS_MSA_INS_TR_BLOCK_INSPECTION_H', 'INS_MSA_INS_TR_INSPECTION_GENBA', 'INS_MSA_EBCCVAL_TR_EBCC_VALIDATION_H']);
 			console.log(config.app.kafka[config.app.env])
