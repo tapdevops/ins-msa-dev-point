@@ -32,8 +32,8 @@
 				// connect directly to kafka broker (instantiates a KafkaClient)
 				kafkaHost: config.app.kafka[config.app.env].server_host,
 				groupId: "INS_MSA_POINT_GROUP",
-				autoCommit: true,
-				autoCommitIntervalMs: 5000,
+				autoCommit: false,
+				// autoCommitIntervalMs: 5000,
 				sessionTimeout: 15000,
 				fetchMaxBytes: 10 * 1024 * 1024, // 10 MB
 				// An array of partition assignment protocols ordered by preference. 'roundrobin' or 'range' string for
@@ -44,7 +44,13 @@
 				fromOffset: 'latest',
 				// how to recover from OutOfRangeOffset error (where save offset is past server retention)
 				// accepts same value as fromOffset
-				outOfRangeOffset: 'earliest'
+                outOfRangeOffset: 'earliest',
+                commitOffsetsOnFirstJoin: true, // on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
+				// how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
+				outOfRangeOffset: 'earliest', // default
+				// Callback to allow consumers with autoCommit false a chance to commit before a rebalance finishes
+				// isAlreadyMember will be false on the first connection, and true on rebalances triggered after that
+				onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
 			};
 			let consumerGroup = new ConsumerGroup(options, ['INS_MSA_FINDING_TR_FINDING', 'INS_MSA_INS_TR_BLOCK_INSPECTION_H', 'INS_MSA_INS_TR_INSPECTION_GENBA', 'INS_MSA_EBCCVAL_TR_EBCC_VALIDATION_H']);
 			console.log(config.app.kafka[config.app.env])
@@ -68,7 +74,7 @@
 				console.error(error);
 			});
         }
-        async save(message) {
+        async save(message, consumerGroup) {
             try {
                 let now = moment(new Date()).tz('Asia/Jakarta')
                 let endOfMonth = new Date(now.year(), now.month() + 1, 0);
@@ -87,30 +93,30 @@
                         //jika finding sudah diselesaikan dan tidak overdue dapat 5 point ,
                         // jika overdue maka user yang menyelasaikan finding tidak mendapatkan tambahan point
                         if (endTimeNumber <= dueDate) {
-                            this.updatePoint(data.UPTUR, 5, dateNumber, null, werks);
+                            this.updatePoint(data.UPTUR, 5, dateNumber, null, werks, consumerGroup);
                         }
                         
                         //update point user yang membuat finding
-                        this.updatePoint(data.INSUR, 2, dateNumber, null, werks);
+                        this.updatePoint(data.INSUR, 2, dateNumber, null, werks, consumerGroup);
                         //memberi tambahan point sesuai rating yang diberikan
                         
                     } else if (data.END_TIME != "" && data.RTGVL != 0) {
                         let ratings = [1, 2, 3, 4];
                         for (let i = 0; i < ratings.length; i++) {
                             if (data.RTGVL == ratings[i]) {
-                                this.updatePoint(data.UPTUR, ratings[i] - 2, dateNumber, null, werks);
+                                this.updatePoint(data.UPTUR, ratings[i] - 2, dateNumber, null, werks, consumerGroup);
                                 break;
                             }
                         }
                     } 
                 } else if (topic === 'INS_MSA_INS_TR_BLOCK_INSPECTION_H') {
-                    this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks);
+                    this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks, consumerGroup);
                 } else if (topic === 'INS_MSA_INS_TR_INSPECTION_GENBA') {
                     let inspection = await Models.InspectionH.findOne({BLOCK_INSPECTION_CODE: data.BINCH}).select({_id: 0, WERKS: 1});
                     let werksGenba = inspection.WERKS;
-                    this.updatePoint(data.GNBUR, 1, dateNumber, inspectionDate, werksGenba);
+                    this.updatePoint(data.GNBUR, 1, dateNumber, inspectionDate, werksGenba, consumerGroup);
                 } else if (topic === 'INS_MSA_EBCCVAL_TR_EBCC_VALIDATION_H') {
-                    this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks);
+                    this.updatePoint(data.INSUR, 1, dateNumber, inspectionDate, werks, consumerGroup);
                 }
             } catch (err) {
                 console.log(err);
@@ -118,7 +124,7 @@
         }
 
         //tambahkan point user
-        async updatePoint(userAuthCode, point, dateNumber, inspectionDate = 0, werks) {
+        async updatePoint(userAuthCode, point, dateNumber, inspectionDate = 0, werks, consumerGroup) {
             console.log(werks);
             let set = new Models.Point({
                 USER_AUTH_CODE: userAuthCode, 
@@ -131,6 +137,7 @@
             await set.save()
             .then(data => {
                 console.log('berhasil save');
+                this.commitOffset(consumerGroup);
             })
             .catch(err => {
                 if (inspectionDate != 0) {
@@ -146,6 +153,7 @@
                     })
                     .then( () => {
                         console.log("sukses update", userAuthCode)
+                        this.commitOffset(consumerGroup);
                     })
                     .catch(err => {
                         console.log(err);
@@ -161,13 +169,23 @@
                         }
                     })  
                     .then( (data) => {
-                        console.log("sukses update", userAuthCode)
+                        console.log("sukses update", userAuthCode);
+                        this.commitOffset(consumerGroup);
                     })
                     .catch(err => {
                         console.log(err);
                     });
                 }
             });
+        }
+
+        commitOffset(consumerGroup) {
+            setTimeout(() => {
+                consumerGroup.commit((error, data) => {
+                    // Here the commit will work as expected
+                    console.log('succesfully committed');
+                });
+            }, 0);
         }
     }
     
