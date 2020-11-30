@@ -8,10 +8,10 @@
  */
     //Models
     const Models = {
-        Point: require(_directory_base + '/app/models/Point.js'),
-        ViewUserAuth: require(_directory_base + '/app/models/ViewUserAuth.js'),
-        Comp: require(_directory_base + '/app/models/Comp.js'),
-        Est: require(_directory_base + '/app/models/Est.js'),
+        Point: require(_directory_base + '/app/v1.0/models/Point.js'),
+        ViewUserAuth: require(_directory_base + '/app/v1.0/models/ViewUserAuth.js'),
+        Comp: require(_directory_base + '/app/v1.0/models/Comp.js'),
+        Est: require(_directory_base + '/app/v1.0/models/Est.js'),
     }
 
     //Node_modules

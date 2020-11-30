@@ -15,8 +15,6 @@
         InspectionH: require( _directory_base + '/app/v1.0/models/InspectionH.js'),
     }
 
-    //library
-    const Helper = require( _directory_base + '/app/v1.0/utils/Helper.js');
 /*
 |--------------------------------------------------------------------------
 | Kafka Server Library
