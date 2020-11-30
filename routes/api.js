@@ -13,7 +13,7 @@
             Point: require( _directory_base + '/app/v1.0/controllers/Point.js' ),
         }
     }
-    const VerifyToken =  require(_directory_base + '/app/utils/VerifyToken.js')
+    const VerifyToken =  require(_directory_base + '/app/v1.0/utils/VerifyToken.js')
     module.exports = ( app ) => {
 
         /*
